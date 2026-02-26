@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GBA Vault v2.0 - Game Boy Advance Emulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --win-gray:     #c0c0c0;
+  --win-dark:     #808080;
+  --win-darker:   #404040;
+  --win-white:    #ffffff;
+  --win-bg:       #008080;
+  --win-blue:     #000080;
+  --win-blue2:    #0000aa;
+  --win-title:    #0a246a;
+  --win-title2:   #a6caf0;
+  --gba-purple:   #3d2b6b;
+  --gba-dark:     #1a1040;
+  --gba-screen:   #9bbc0f;
+  --gba-screen2:  #306230;
+  --pixel-green:  #00ff41;
+  --neon-pink:    #ff00ff;
+  --neon-cyan:    #00ffff;
+  --neon-yellow:  #ffff00;
+  --lcd-bg:       #8bac0f;
+  --lcd-dark:     #0f380f;
+}
+
+/* ═══════ TILED DESKTOP BG ═══════ */
+html {
+  background: var(--win-bg);
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent, transparent 2px,
+      rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px
+    );
+  min-height: 100vh;
+}
+
+body {
+  font-family: 'MS Sans Serif', 'Arial', sans-serif;
+  font-size: 11px;
+  color: #000;
+  min-height: 100vh;
+  padding: 8px;
+}
+
+/* ═══════ TASKBAR ═══════ */
+.taskbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-white);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  gap: 4px;
+  z-index: 1000;
+}
+
+.start-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-white);
+  border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker);
+  border-bottom: 2px solid var(--win-darker);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.start-btn:active {
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+}
+
+.start-logo { font-size: 14px; }
+
+.taskbar-sep {
+  width: 2px; height: 20px;
+  border-left: 1px solid var(--win-dark);
+  border-right: 1px solid var(--win-white);
+  margin: 0 2px;
+}
+
+.taskbar-task {
+  display: flex; align-items: center; gap-4px;
+  padding: 2px 8px;
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  font-size: 10px;
+  min-width: 120px;
+}
+
+.taskbar-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 6px;
+  border-top: 1px solid var(--win-dark);
+  border-left: 1px solid var(--win-dark);
+  border-right: 1px solid var(--win-white);
+  border-bottom: 1px solid var(--win-white);
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+}
+
+.sys-tray-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #00cc00;
+  box-shadow: 0 0 4px #00ff00;
+}
+
+/* ═══════ WINDOW ═══════ */
+.window {
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-white);
+  border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker);
+  border-bottom: 2px solid var(--win-darker);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+  margin-bottom: 8px;
+}
+
+.title-bar {
+  display: flex; align-items: center;
+  padding: 3px 4px;
+  background: linear-gradient(90deg, var(--win-title) 0%, var(--win-title2) 100%);
+  gap: 4px;
+}
+
+.title-bar-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: white;
+  flex: 1;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  letter-spacing: 0.5px;
+}
+
+.title-icon { font-size: 12px; }
+
+.title-btns {
+  display: flex; gap: 2px;
+}
+
+.title-btn {
+  width: 16px; height: 14px;
+  background: var(--win-gray);
+  border-top: 1px solid var(--win-white);
+  border-left: 1px solid var(--win-white);
+  border-right: 1px solid var(--win-darker);
+  border-bottom: 1px solid var(--win-darker);
+  font-size: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.title-btn:active {
+  border-top: 1px solid var(--win-darker);
+  border-left: 1px solid var(--win-darker);
+  border-right: 1px solid var(--win-white);
+  border-bottom: 1px solid var(--win-white);
+}
+
+/* ═══════ MENU BAR ═══════ */
+.menubar {
+  display: flex;
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--win-dark);
+  background: var(--win-gray);
+  font-size: 11px;
+  gap: 2px;
+}
+
+.menu-item {
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--win-blue);
+  color: white;
+}
+
+/* ═══════ WIN BUTTON ═══════ */
+.wbtn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 4px 12px;
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-white);
+  border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker);
+  border-bottom: 2px solid var(--win-darker);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'MS Sans Serif', 'Arial', sans-serif;
+}
+
+.wbtn:hover { background: #d4d0c8; }
+
+.wbtn:active, .wbtn.pressed {
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  padding: 5px 11px 3px 13px;
+}
+
+.wbtn:disabled { color: var(--win-dark); opacity: 0.6; cursor: default; }
+.wbtn:disabled:hover { background: var(--win-gray); }
+
+.wbtn.default {
+  background: var(--win-gray);
+  border: 2px solid #000;
+  outline: 2px solid var(--win-gray);
+}
+
+/* ═══════ SUNKEN BOX ═══════ */
+.sunken {
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  background: white;
+}
+
+.raised {
+  border-top: 2px solid var(--win-white);
+  border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker);
+  border-bottom: 2px solid var(--win-darker);
+}
+
+/* ═══════ MAIN LAYOUT ═══════ */
+.desktop {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 8px;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding-bottom: 36px;
+}
+
+/* ═══════ GBA DEVICE ═══════ */
+.gba-window .window-body {
+  padding: 8px;
+}
+
+/* The actual GBA hardware shell */
+.gba-body {
+  background: linear-gradient(160deg, #4a3580 0%, #2d1f5e 40%, #1a1040 100%);
+  border-radius: 12px 12px 60px 60px;
+  padding: 14px 14px 30px;
+  position: relative;
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.15),
+    inset -2px -2px 0 rgba(0,0,0,0.3),
+    4px 4px 0 #000,
+    6px 6px 0 rgba(0,0,0,0.3);
+  border: 2px solid #000;
+}
+
+/* Top screws */
+.gba-screws {
+  display: flex; justify-content: space-between;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.screw {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #888, #333);
+  border: 1px solid #222;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.3);
+}
+
+/* Speaker grill lines */
+.speaker-grill {
+  position: absolute;
+  right: 20px; top: 80px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+
+.grill-line {
+  width: 16px; height: 2px;
+  background: #1a1040;
+  border-radius: 1px;
+}
+
+/* GBA label area */
+.gba-label {
+  text-align: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 3px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+/* Screen housing */
+.screen-housing {
+  background: #0d0820;
+  border-radius: 6px;
+  padding: 10px;
+  border-top: 3px solid rgba(0,0,0,0.5);
+  border-left: 3px solid rgba(0,0,0,0.5);
+  border-right: 3px solid rgba(255,255,255,0.1);
+  border-bottom: 3px solid rgba(255,255,255,0.1);
+  margin-bottom: 14px;
+  position: relative;
+}
+
+/* Power LED */
+.power-led {
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #330000;
+  border: 1px solid #000;
+  transition: all 0.3s;
+}
+
+.power-led.on {
+  background: #ff2200;
+  box-shadow: 0 0 6px #ff2200, 0 0 12px rgba(255,34,0,0.5);
+}
+
+.screen-inner {
+  background: var(--lcd-bg);
+  position: relative;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 300px;
+}
+
+/* CRT curve effect */
+.screen-inner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 100%);
+  pointer-events: none; z-index: 5;
+}
+
+/* Scanlines */
+.screen-inner::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent, transparent 2px,
+    rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 3px
+  );
+  pointer-events: none; z-index: 6;
+}
+
+#gbaCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  position: relative; z-index: 1;
+}
+
+/* Drop zone */
+.drop-zone {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px;
+  background: var(--lcd-bg);
+  cursor: pointer;
+}
+
+.drop-zone.drag-over { background: #aad010; }
+
+.dz-pixel-art {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 24px;
+  color: var(--lcd-dark);
+  animation: pixel-blink 1.2s step-end infinite;
+}
+
+@keyframes pixel-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.dz-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: var(--lcd-dark);
+  text-align: center;
+  line-height: 2;
+  letter-spacing: 0.5px;
+}
+
+.dz-btns-row {
+  display: flex; gap: 6px;
+  margin-top: 6px;
+}
+
+/* Loading screen */
+.loading-cover {
+  position: absolute; inset: 0; z-index: 20;
+  background: var(--lcd-dark);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+}
+
+.loading-cover.on { display: flex; }
+
+.loading-bar-outer {
+  width: 140px; height: 12px;
+  background: #0a280a;
+  border: 2px solid var(--gba-screen);
+  border-radius: 0;
+}
+
+.loading-bar-inner {
+  height: 100%;
+  background: var(--gba-screen);
+  width: 0%;
+  animation: load-fill 2s ease-out forwards;
+}
+
+@keyframes load-fill { to { width: 100%; } }
+
+.loading-txt {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--gba-screen);
+  animation: pixel-blink 0.8s step-end infinite;
+}
+
+/* ── SHOULDER BUTTONS ── */
+.gba-shoulders {
+  display: flex; justify-content: space-between;
+  margin: -14px -14px 0;
+  padding: 0 4px;
+}
+
+.shoulder-btn {
+  width: 60px; height: 18px;
+  background: linear-gradient(180deg, #5a4595 0%, #3d2b6b 100%);
+  border-top: 2px solid rgba(255,255,255,0.2);
+  border-left: 2px solid rgba(255,255,255,0.2);
+  border-right: 2px solid rgba(0,0,0,0.4);
+  border-bottom: 2px solid rgba(0,0,0,0.4);
+  border-radius: 4px 4px 0 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px; color: rgba(255,255,255,0.7);
+  user-select: none;
+  transition: filter 0.1s;
+}
+
+.shoulder-btn:hover { filter: brightness(1.2); }
+.shoulder-btn:active, .shoulder-btn.active { filter: brightness(0.8); }
+
+/* ── CONTROLS ROW ── */
+.gba-controls {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 0 4px;
+}
+
+/* D-PAD */
+.dpad-wrap { position: relative; }
+
+.dpad {
+  display: grid;
+  grid-template: repeat(3,1fr) / repeat(3,1fr);
+  gap: 2px;
+  width: 80px; height: 80px;
+}
+
+.dp {
+  background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
+  border-top: 1px solid rgba(255,255,255,0.15);
+  border-left: 1px solid rgba(255,255,255,0.15);
+  border-right: 1px solid rgba(0,0,0,0.5);
+  border-bottom: 1px solid rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; color: #666;
+  cursor: pointer; user-select: none;
+  transition: all 0.08s;
+}
+
+.dp:hover { background: #444; color: #aaa; }
+.dp:active, .dp.active {
+  background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+  border-top-color: rgba(0,0,0,0.5);
+  border-left-color: rgba(0,0,0,0.5);
+  border-right-color: rgba(255,255,255,0.15);
+  border-bottom-color: rgba(255,255,255,0.15);
+  color: #aaaaaa;
+}
+
+.dp.cx { background: transparent; border-color: transparent; cursor: default; }
+.dp.cx:hover, .dp.cx:active { background: transparent; border-color: transparent; }
+
+/* START/SELECT */
+.meta-group {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+
+.meta-oval {
+  width: 42px; height: 14px;
+  background: linear-gradient(180deg, #222 0%, #111 100%);
+  border-radius: 7px;
+  border-top: 1px solid rgba(0,0,0,0.8);
+  border-left: 1px solid rgba(0,0,0,0.6);
+  border-right: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none;
+  transition: filter 0.08s;
+}
+
+.meta-oval:hover { filter: brightness(1.5); }
+.meta-oval:active, .meta-oval.active { filter: brightness(0.7); }
+
+.meta-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px; color: rgba(255,255,255,0.35);
+  text-align: center; margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+/* A/B BUTTONS */
+.ab-group {
+  display: grid;
+  grid-template: 1fr 1fr / 1fr 1fr;
+  gap: 6px;
+  width: 72px;
+}
+
+.ab-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px; font-weight: bold;
+  color: rgba(255,255,255,0.9);
+  user-select: none;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.08s;
+}
+
+.ab-btn:active, .ab-btn.active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(0,0,0,0.2);
+}
+
+.btn-a { background: radial-gradient(circle at 35% 35%, #cc2222, #880000); }
+.btn-b { background: radial-gradient(circle at 35% 35%, #2244cc, #112288); }
+
+/* ── TRANSPORT BAR ── */
+.transport-bar {
+  padding: 6px 8px;
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-darker);
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap;
+}
+
+.transport-bar .gap { flex: 1; }
+
+/* ── STATUS BAR ── */
+.status-bar {
+  display: flex;
+  border-top: 1px solid var(--win-dark);
+  background: var(--win-gray);
+}
+
+.status-cell {
+  padding: 2px 6px;
+  border-top: 1px solid var(--win-dark);
+  border-left: 1px solid var(--win-dark);
+  border-right: 1px solid var(--win-white);
+  border-bottom: 1px solid var(--win-white);
+  font-size: 10px;
+  min-width: 80px;
+}
+
+.status-cell:first-child { flex: 1; }
+
+/* ═══════ SIDEBAR ═══════ */
+.sidebar { display: flex; flex-direction: column; gap: 8px; }
+
+/* ═══════ SAVE SLOTS ═══════ */
+.slot-list {
+  padding: 4px;
+  background: white;
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  min-height: 60px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.slot-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 4px;
+  font-size: 10px;
+  cursor: default;
+  border-bottom: 1px dotted #ddd;
+}
+
+.slot-item:last-child { border-bottom: none; }
+.slot-item:hover { background: var(--win-blue); color: white; }
+.slot-item:hover .slot-acts button { color: white; }
+
+.slot-num {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px; color: var(--win-blue);
+  width: 14px; flex-shrink: 0;
+}
+
+.slot-item:hover .slot-num { color: var(--neon-yellow); }
+
+.slot-info { flex: 1; min-width: 0; }
+
+.slot-name {
+  font-size: 10px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+.slot-date { font-size: 9px; color: #666; }
+.slot-item:hover .slot-date { color: #ccc; }
+
+.slot-acts { display: flex; gap: 2px; }
+
+.slot-acts button {
+  font-size: 8px; padding: 1px 4px;
+  background: var(--win-gray);
+  border-top: 1px solid var(--win-white);
+  border-left: 1px solid var(--win-white);
+  border-right: 1px solid var(--win-darker);
+  border-bottom: 1px solid var(--win-darker);
+  cursor: pointer;
+}
+
+.slot-acts button:active {
+  border-top: 1px solid var(--win-darker);
+  border-left: 1px solid var(--win-darker);
+  border-right: 1px solid var(--win-white);
+  border-bottom: 1px solid var(--win-white);
+}
+
+/* ═══════ KEYMAP ═══════ */
+.keymap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.keymap-table td {
+  padding: 2px 6px;
+  border-bottom: 1px solid #ddd;
+}
+
+.keymap-table td:first-child { color: #444; }
+
+.key-chip {
+  display: inline-block;
+  background: var(--win-gray);
+  border-top: 1px solid var(--win-white);
+  border-left: 1px solid var(--win-white);
+  border-right: 1px solid var(--win-darker);
+  border-bottom: 1px solid var(--win-darker);
+  padding: 1px 4px;
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  min-width: 20px; text-align: center;
+}
+
+/* ═══════ NEON/RETRO LOGO AREA ═══════ */
+.neon-header {
+  text-align: center;
+  padding: 6px 4px;
+  background: linear-gradient(180deg, #000033 0%, #000066 50%, #000033 100%);
+  border-bottom: 3px solid #0000cc;
+  position: relative;
+  overflow: hidden;
+}
+
+.neon-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(0,0,255,0.05) 20px, rgba(0,0,255,0.05) 21px),
+    repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0,0,255,0.05) 20px, rgba(0,0,255,0.05) 21px);
+  pointer-events: none;
+}
+
+.neon-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  color: var(--neon-cyan);
+  text-shadow:
+    0 0 7px var(--neon-cyan),
+    0 0 14px var(--neon-cyan),
+    0 0 28px rgba(0,255,255,0.5);
+  letter-spacing: 4px;
+  position: relative; z-index: 1;
+}
+
+.neon-sub {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: var(--neon-pink);
+  text-shadow: 0 0 6px var(--neon-pink), 0 0 12px rgba(255,0,255,0.4);
+  letter-spacing: 2px;
+  margin-top: 2px;
+  position: relative; z-index: 1;
+}
+
+.neon-stars {
+  display: flex; justify-content: center; gap: 6px;
+  margin-top: 4px;
+  position: relative; z-index: 1;
+}
+
+.star {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  animation: star-cycle 2s linear infinite;
+}
+
+@keyframes star-cycle {
+  0%   { color: var(--neon-cyan); }
+  33%  { color: var(--neon-pink); }
+  66%  { color: var(--neon-yellow); }
+  100% { color: var(--neon-cyan); }
+}
+
+/* ═══════ WINDOW BODY PADDING ═══════ */
+.win-body { padding: 8px; }
+.win-body-tight { padding: 4px; }
+
+/* ═══════ LABEL ═══════ */
+.win-label {
+  font-size: 11px; font-weight: bold;
+  margin-bottom: 4px; display: block;
+}
+
+/* ═══════ TEXTFIELD ═══════ */
+.win-input {
+  width: 100%;
+  padding: 3px 4px;
+  font-family: 'MS Sans Serif', 'Arial', sans-serif;
+  font-size: 11px;
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  background: white;
+  outline: none;
+}
+
+.win-input:focus { border-top-color: #000; border-left-color: #000; }
+
+/* ═══════ DRIVE MODAL (DIALOG BOX) ═══════ */
+.dialog-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.dialog-overlay.open { opacity: 1; pointer-events: all; }
+
+.dialog {
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-white);
+  border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker);
+  border-bottom: 2px solid var(--win-darker);
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+  width: 500px; max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ═══════ HELP TEXT ═══════ */
+.help-text {
+  background: white;
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  padding: 6px 8px;
+  font-size: 10px;
+  line-height: 1.7;
+  color: #333;
+}
+
+.help-text a { color: var(--win-blue2); }
+
+/* ═══════ PROGRESS / STATUS ═══════ */
+.progress-outer {
+  width: 100%; height: 16px;
+  background: white;
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  overflow: hidden;
+}
+
+.progress-inner {
+  height: 100%;
+  background: var(--win-blue);
+  background: repeating-linear-gradient(90deg, var(--win-blue) 0px, var(--win-blue) 8px, #0000cc 8px, #0000cc 12px);
+  width: 0; transition: width 0.3s;
+}
+
+/* ═══════ FILE LIST ═══════ */
+.file-listbox {
+  background: white;
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  max-height: 200px; overflow-y: auto;
+  padding: 2px;
+}
+
+.file-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 4px;
+  font-size: 11px; cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.file-row:hover { background: var(--win-blue); color: white; }
+.file-row:hover .file-meta { color: #ccc; }
+
+.file-ico { font-size: 14px; flex-shrink: 0; }
+.file-details { flex: 1; min-width: 0; }
+.file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+.file-meta { font-size: 9px; color: #888; }
+.file-size { font-size: 10px; color: #444; flex-shrink: 0; }
+.file-row:hover .file-size { color: #ddd; }
+
+.list-empty { padding: 12px; text-align: center; color: #888; font-size: 11px; }
+
+/* ═══════ TOAST (like an XP balloon) ═══════ */
+#toast {
+  position: fixed;
+  bottom: 36px; right: 8px;
+  z-index: 9999;
+  background: #ffffcc;
+  border: 1px solid #888;
+  border-radius: 6px 6px 0 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  max-width: 240px;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  opacity: 0; transform: translateY(4px);
+  transition: all 0.2s;
+  pointer-events: none;
+  line-height: 1.5;
+}
+
+#toast::after {
+  content: '';
+  position: absolute;
+  bottom: -8px; right: 0;
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-top: 8px solid #888;
+}
+
+#toast.show { opacity: 1; transform: translateY(0); }
+#toast.error { background: #ffeeee; border-color: #cc0000; }
+#toast.success { background: #eeffee; border-color: #008800; }
+
+/* ═══════ MISC ═══════ */
+.sep-h {
+  height: 2px;
+  border-top: 1px solid var(--win-dark);
+  border-bottom: 1px solid var(--win-white);
+  margin: 4px 0;
+}
+
+.tab-bar {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--win-darker);
+}
+
+.tab {
+  padding: 3px 10px;
+  background: #b0b0b0;
+  border-top: 2px solid var(--win-white);
+  border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker);
+  font-size: 10px; cursor: pointer;
+  position: relative; bottom: -2px;
+}
+
+.tab.active {
+  background: var(--win-gray);
+  border-bottom: 2px solid var(--win-gray);
+  font-weight: bold;
+  z-index: 1;
+}
+
+.tab-content { display: none; padding: 6px; }
+.tab-content.active { display: block; }
+
+.drive-tabs-row { display: flex; gap: 4px; margin: 4px 0; }
+.drive-tab-btn {
+  padding: 2px 8px; font-size: 10px; cursor: pointer;
+  background: var(--win-gray);
+  border-top: 2px solid var(--win-white);
+  border-left: 2px solid var(--win-white);
+  border-right: 2px solid var(--win-darker);
+  border-bottom: 2px solid var(--win-darker);
+}
+
+.drive-tab-btn.active {
+  background: #d0d0d0;
+  border-top: 2px solid var(--win-darker);
+  border-left: 2px solid var(--win-darker);
+  border-right: 2px solid var(--win-white);
+  border-bottom: 2px solid var(--win-white);
+  font-weight: bold;
+}
+
+.dtabpane { display: none; }
+.dtabpane.active { display: block; }
+
+.spin-wrap { display: flex; align-items: center; gap: 8px; padding: 12px; color: #666; font-size: 10px; }
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid #ccc; border-top-color: var(--win-blue);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.badge {
+  display: inline-block;
+  background: var(--win-blue);
+  color: white;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+#romInput, #sramInput { display: none; }
+
+.sram-row { display: flex; gap: 4px; }
+
+@media (max-width: 860px) {
+  .desktop { grid-template-columns: 1fr; }
+  .taskbar { display: none; }
+  body { padding-bottom: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ NEON HEADER WINDOW ═══════ -->
+<div class="window" style="margin-bottom:8px">
+  <div class="title-bar">
+    <span class="title-icon">🎮</span>
+    <span class="title-bar-text">GBA Vault v2.0 - Game Boy Advance Emulator</span>
+    <div class="title-btns">
+      <div class="title-btn">_</div>
+      <div class="title-btn">□</div>
+      <div class="title-btn" style="font-size:9px">✕</div>
+    </div>
+  </div>
+  <div class="neon-header">
+    <div class="neon-title">★ GBA VAULT ★</div>
+    <div class="neon-sub">GAME BOY ADVANCE EMULATOR v2.0</div>
+    <div class="neon-stars">
+      <span class="star">✦</span><span class="star" style="animation-delay:-0.6s">★</span>
+      <span class="star" style="animation-delay:-1.2s">◆</span><span class="star" style="animation-delay:-0.3s">✦</span>
+      <span class="star" style="animation-delay:-0.9s">★</span>
+    </div>
+  </div>
+  <div class="menubar">
+    <span class="menu-item">File</span>
+    <span class="menu-item">Emulation</span>
+    <span class="menu-item">Save States</span>
+    <span class="menu-item">Options</span>
+    <span class="menu-item">Help</span>
+  </div>
+</div>
+
+<div class="desktop">
+
+  <!-- ═══════ LEFT: GBA + CONTROLS ═══════ -->
+  <div>
+
+    <!-- GBA Hardware Window -->
+    <div class="window">
+      <div class="title-bar">
+        <span class="title-icon">🕹️</span>
+        <span class="title-bar-text" id="windowTitle">[ No ROM Loaded ]</span>
+        <div class="title-btns">
+          <div class="title-btn">_</div><div class="title-btn">□</div><div class="title-btn" style="font-size:9px">✕</div>
+        </div>
+      </div>
+
+      <div class="win-body-tight">
+        <!-- GBA SHELL -->
+        <div class="gba-body" id="gbaBody">
+          <div class="gba-screws">
+            <div class="screw"></div><div class="screw"></div>
+          </div>
+
+          <!-- Shoulder buttons -->
+          <div class="gba-shoulders">
+            <button class="shoulder-btn" data-key="shoulder_left" onmousedown="pressKey('shoulder_left')" onmouseup="releaseKey('shoulder_left')">L</button>
+            <button class="shoulder-btn" data-key="shoulder_right" onmousedown="pressKey('shoulder_right')" onmouseup="releaseKey('shoulder_right')">R</button>
+          </div>
+
+          <div class="gba-label">★ GAME BOY ADVANCE ★</div>
+
+          <!-- Power LED -->
+          <div class="power-led" id="powerLed"></div>
+
+          <!-- Screen -->
+          <div class="screen-housing">
+            <div class="screen-inner">
+              <div id="ejsContainer" style="position:relative;z-index:1;display:flex;align-items:center;justify-content:center;">
+                <canvas id="gbaCanvas" width="240" height="160" style="width:480px;height:300px;image-rendering:pixelated;display:block;"></canvas>
+              </div>
+
+              <!-- Drop zone -->
+              <div class="drop-zone" id="dropZone">
+                <div class="dz-pixel-art">▶</div>
+                <div class="dz-text">
+                  INSERT CARTRIDGE<br>
+                  ─────────────────<br>
+                  DROP .GBA FILE HERE<br>
+                  OR SELECT SOURCE
+                </div>
+                <div id="engineStatusLine" style="font-family:'Press Start 2P',monospace;font-size:5px;color:#306230;margin-top:4px;text-align:center;letter-spacing:0.5px">INITIALIZING ENGINE...</div>
+                <div class="dz-btns-row">
+                  <button class="wbtn" onclick="document.getElementById('romInput').click()">📁 Open File</button>
+                  <button class="wbtn" onclick="openDriveModal()">☁ Google Drive</button>
+                </div>
+              </div>
+
+              <!-- Loading -->
+              <div class="loading-cover" id="loadingCover">
+                <div class="loading-txt">LOADING...</div>
+                <div class="loading-bar-outer"><div class="loading-bar-inner"></div></div>
+                <div class="loading-txt" style="animation-delay:-0.4s">PLEASE WAIT</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Speaker grill -->
+          <div class="speaker-grill">
+            <div class="grill-line"></div><div class="grill-line"></div>
+            <div class="grill-line"></div><div class="grill-line"></div>
+            <div class="grill-line"></div><div class="grill-line"></div>
+          </div>
+
+          <!-- Controls -->
+          <div class="gba-controls">
+            <!-- D-PAD -->
+            <div>
+              <div class="dpad">
+                <div></div>
+                <button class="dp" data-key="up" onmousedown="pressKey('up')" onmouseup="releaseKey('up')">▲</button>
+                <div></div>
+                <button class="dp" data-key="left" onmousedown="pressKey('left')" onmouseup="releaseKey('left')">◄</button>
+                <div class="dp cx"></div>
+                <button class="dp" data-key="right" onmousedown="pressKey('right')" onmouseup="releaseKey('right')">►</button>
+                <div></div>
+                <button class="dp" data-key="down" onmousedown="pressKey('down')" onmouseup="releaseKey('down')">▼</button>
+                <div></div>
+              </div>
+            </div>
+
+            <!-- START / SELECT -->
+            <div class="meta-group">
+              <div>
+                <div class="meta-oval" data-key="select" onmousedown="pressKey('select')" onmouseup="releaseKey('select')"></div>
+                <div class="meta-label">SELECT</div>
+              </div>
+              <div>
+                <div class="meta-oval" data-key="start" onmousedown="pressKey('start')" onmouseup="releaseKey('start')"></div>
+                <div class="meta-label">START</div>
+              </div>
+            </div>
+
+            <!-- A / B -->
+            <div>
+              <div class="ab-group">
+                <div></div>
+                <button class="ab-btn btn-a" data-key="a" onmousedown="pressKey('a')" onmouseup="releaseKey('a')">A</button>
+                <button class="ab-btn btn-b" data-key="b" onmousedown="pressKey('b')" onmouseup="releaseKey('b')">B</button>
+                <div></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /gba-body -->
+      </div>
+
+      <!-- Transport toolbar -->
+      <div class="transport-bar">
+        <button class="wbtn default" id="playPauseBtn" onclick="togglePause()" disabled>▶ Play</button>
+        <button class="wbtn" id="resetBtn" onclick="resetGame()" disabled>↺ Reset</button>
+        <div class="sep-h" style="width:2px;height:20px;margin:0 4px;border-top:none;border-bottom:none;border-left:1px solid var(--win-dark);border-right:1px solid var(--win-white)"></div>
+        <button class="wbtn" onclick="saveState()" id="saveBtn" disabled>💾 Save State</button>
+        <div class="gap"></div>
+        <button class="wbtn" onclick="openDriveModal()">☁ Drive</button>
+        <button class="wbtn" onclick="document.getElementById('romInput').click()">📁 Open ROM</button>
+      </div>
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <div class="status-cell" id="statusText">Ready</div>
+        <div class="status-cell" id="fpsDisplay" style="min-width:60px">-- FPS</div>
+        <div class="status-cell" style="min-width:70px">GBA.js v1.0</div>
+      </div>
+    </div>
+
+    <!-- Notice -->
+    <div class="window" style="margin-top:4px">
+      <div class="win-body" style="font-size:10px;color:#444;line-height:1.6">
+        ⚠ <b>Legal Notice:</b> You must own the physical cartridge before loading any ROM. This emulator is for personal backup use only. Powered by GBA.js (MIT License). All save data stored locally in your browser.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════ RIGHT SIDEBAR ═══════ -->
+  <div class="sidebar">
+
+    <!-- SAVE STATES -->
+    <div class="window">
+      <div class="title-bar">
+        <span class="title-icon">💾</span>
+        <span class="title-bar-text">Save States — <span id="slotCount">0/8 used</span></span>
+        <div class="title-btns"><div class="title-btn">_</div><div class="title-btn" style="font-size:9px">✕</div></div>
+      </div>
+      <div class="win-body-tight">
+        <div class="slot-list" id="saveSlotsContainer"></div>
+      </div>
+    </div>
+
+    <!-- BATTERY SAVE -->
+    <div class="window">
+      <div class="title-bar">
+        <span class="title-icon">🔋</span>
+        <span class="title-bar-text">Battery Save (SRAM)</span>
+        <div class="title-btns"><div class="title-btn">_</div><div class="title-btn" style="font-size:9px">✕</div></div>
+      </div>
+      <div class="win-body">
+        <div class="help-text" style="margin-bottom:6px">
+          In-game saves (.sav) are auto-backed up when you close the page. Use the buttons below to manually export or import a save file.
+        </div>
+        <div class="sram-row">
+          <button class="wbtn" style="flex:1;justify-content:center" onclick="exportSRAM()">📤 Export .sav</button>
+          <button class="wbtn" style="flex:1;justify-content:center" onclick="importSRAM()">📥 Import .sav</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEY MAP -->
+    <div class="window">
+      <div class="title-bar">
+        <span class="title-icon">⌨️</span>
+        <span class="title-bar-text">Keyboard Controls</span>
+        <div class="title-btns"><div class="title-btn">_</div><div class="title-btn" style="font-size:9px">✕</div></div>
+      </div>
+      <div class="win-body-tight">
+        <table class="keymap-table">
+          <tr><td>D-Pad Up</td><td><span class="key-chip">↑</span></td><td>D-Pad Down</td><td><span class="key-chip">↓</span></td></tr>
+          <tr><td>D-Pad Left</td><td><span class="key-chip">←</span></td><td>D-Pad Right</td><td><span class="key-chip">→</span></td></tr>
+          <tr><td>A Button</td><td><span class="key-chip">Z</span></td><td>B Button</td><td><span class="key-chip">X</span></td></tr>
+          <tr><td>L Shoulder</td><td><span class="key-chip">A</span></td><td>R Shoulder</td><td><span class="key-chip">S</span></td></tr>
+          <tr><td>Start</td><td><span class="key-chip">Enter</span></td><td>Select</td><td><span class="key-chip">Bksp</span></td></tr>
+          <tr><td>Quick Save</td><td><span class="key-chip">F5</span></td><td>Quick Load</td><td><span class="key-chip">F8</span></td></tr>
+          <tr><td>Pause</td><td><span class="key-chip">P</span></td><td></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════ GOOGLE DRIVE DIALOG ═══════ -->
+<div class="dialog-overlay" id="driveModal">
+  <div class="dialog">
+    <div class="title-bar">
+      <span class="title-icon">☁</span>
+      <span class="title-bar-text">Connect to Google Drive — Open ROM File</span>
+      <div class="title-btns">
+        <div class="title-btn">_</div>
+        <div class="title-btn" onclick="closeDriveModal()" style="font-size:9px">✕</div>
+      </div>
+    </div>
+
+    <!-- Setup Panel -->
+    <div id="driveSetupPanel">
+      <div class="win-body">
+        <div class="help-text" style="margin-bottom:8px">
+          Connect your Google Drive account to load <b>.gba</b> ROM files directly from the cloud. You'll need a Google OAuth 2.0 Client ID from the Google Cloud Console.
+        </div>
+        <label class="win-label">Google OAuth Client ID:</label>
+        <input class="win-input" id="gClientId" type="text" placeholder="xxxxxxxxxx.apps.googleusercontent.com" style="margin-bottom:6px" />
+        <div class="help-text" style="margin-bottom:8px">
+          1. Visit <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → Credentials</a><br>
+          2. Create OAuth 2.0 Web Client ID<br>
+          3. Add this page's URL to <b>Authorized JavaScript origins</b><br>
+          4. Enable <b>Google Drive API</b> and <b>Google Picker API</b>
+        </div>
+        <div id="gAuthError" style="display:none;background:#ffeeee;border:1px solid #cc0000;padding:6px 8px;font-size:10px;color:#cc0000;margin-bottom:8px"></div>
+        <div class="sep-h"></div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;padding-top:4px">
+          <button class="wbtn default" onclick="initGoogleAuth()">🔑 Sign in with Google</button>
+          <button class="wbtn" onclick="closeDriveModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Browser Panel -->
+    <div id="driveFilesPanel" style="display:none">
+      <div class="win-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:10px">Signed in: <b id="gUserEmail">...</b></span>
+          <button class="wbtn" onclick="signOutGoogle()" style="font-size:10px">Sign Out</button>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:6px">
+          <input class="win-input" id="driveSearchInput" placeholder="Search for .gba files in your Drive..." oninput="debouncedDriveSearch()" style="flex:1" />
+          <button class="wbtn" onclick="searchDriveFiles()">🔍 Search</button>
+        </div>
+        <div class="drive-tabs-row">
+          <button class="drive-tab-btn active" id="tab-recent" onclick="switchDriveTab('recent',this)">Recent Files</button>
+          <button class="drive-tab-btn" id="tab-search" onclick="switchDriveTab('search',this)">Search Results</button>
+        </div>
+        <div id="driveRecentPanel" class="dtabpane active">
+          <div class="file-listbox" id="driveRecentList">
+            <div class="spin-wrap"><div class="spinner"></div> Searching for .gba files...</div>
+          </div>
+        </div>
+        <div id="driveSearchPanel" class="dtabpane">
+          <div class="file-listbox" id="driveSearchList">
+            <div class="list-empty">Type in the search box above to find files.</div>
+          </div>
+        </div>
+        <div class="sep-h" style="margin-top:8px"></div>
+        <div style="display:flex;justify-content:flex-end;padding-top:4px">
+          <button class="wbtn" onclick="closeDriveModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST + HIDDEN INPUTS -->
+<div id="toast"></div>
+<input type="file" id="romInput" accept=".gba,.zip" onchange="handleROMFile(event)">
+<input type="file" id="sramInput" accept=".sav" onchange="handleSRAMImport(event)">
+
+<!-- TASKBAR -->
+<div class="taskbar">
+  <button class="start-btn"><span class="start-logo">⊞</span> Start</button>
+  <div class="taskbar-sep"></div>
+  <div class="taskbar-task">🎮 GBA Vault v2.0</div>
+  <div class="taskbar-right">
+    <div class="sys-tray-dot" id="trayDot"></div>
+    <span id="clockDisplay"></span>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDisplay').textContent =
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+updateClock(); setInterval(updateClock, 10000);
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let gba = null;
+let currentROMName = '';
+let currentROMData = null;
+let isRunning = false;
+let isPaused  = false;
+let engineReady = false;
+
+const SAVES_KEY = 'gba_vault_saves';
+const SRAM_KEY  = 'gba_vault_sram_';
+
+function getSaves() { try { return JSON.parse(localStorage.getItem(SAVES_KEY)||'{}'); } catch { return {}; } }
+function setSaves(o) { try { localStorage.setItem(SAVES_KEY, JSON.stringify(o)); } catch { showToast('Storage full!','error'); } }
+
+function setStatus(msg) {
+  const s = document.getElementById('statusText'); if (s) s.textContent = msg;
+  const d = document.getElementById('engineStatusLine'); if (d) d.textContent = msg.toUpperCase();
+}
+
+// ══════════════════════════════════════════════════════════
+// ENGINE LOADING
+// Using gbajs2 (maintained fork of gbajs) — correct file list
+// Files: util, core, arm, thumb, mmu, io, audio, video,
+//        video/proxy, video/software, irq, keypad, sio,
+//        savedata, gpio, gba  (gba.js is the main entry)
+// ══════════════════════════════════════════════════════════
+// Exact file list from andychase/gbajs2 index.html (verified correct order)
+const GBA_FILES = [
+  'util.js','core.js','arm.js','thumb.js','mmu.js',
+  'io.js','audio.js','video.js',
+  'video/proxy.js','video/software.js',
+  'irq.js','keypad.js','sio.js','savedata.js','gpio.js',
+  'gba.js'
+];
+
+function injectScript(src) {
+  return new Promise((resolve, reject) => {
+    // Don't double-load
+    if (document.querySelector(`script[data-gba="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.setAttribute('data-gba', src);
+    s.src = src;
+    const t = setTimeout(() => { s.remove(); reject(new Error(`Timeout: ${src}`)); }, 15000);
+    s.onload  = () => { clearTimeout(t); resolve(); };
+    s.onerror = () => { clearTimeout(t); s.remove(); reject(new Error(`HTTP 404 for ${src}`)); };
+    document.head.appendChild(s);
+  });
+}
+
+async function loadEngineFrom(base) {
+  for (const f of GBA_FILES) {
+    await injectScript(base + f);
+  }
+}
+
+async function initGBAEngine() {
+  if (engineReady) return;
+
+  // Remove any previously injected GBA scripts so we can retry a different source
+  document.querySelectorAll('script[data-gba]').forEach(s => s.remove());
+
+  const SOURCES = [
+    { label: 'self-hosted',           base: '/js/' },
+    { label: 'raw.githubusercontent', base: 'https://raw.githubusercontent.com/andychase/gbajs2/master/js/' },
+    { label: 'jsdelivr',              base: 'https://cdn.jsdelivr.net/gh/andychase/gbajs2@master/js/' },
+  ];
+
+  const errors = [];
+  for (const src of SOURCES) {
+    try {
+      setStatus('Loading engine from ' + src.label + '...');
+      // Clean up scripts from previous failed attempt
+      document.querySelectorAll('script[data-gba]').forEach(s => s.remove());
+      await loadEngineFrom(src.base);
+      if (typeof GameBoyAdvance === 'undefined') throw new Error('GameBoyAdvance class not defined after loading all scripts');
+      engineReady = true;
+      setStatus('Engine ready');
+      return;
+    } catch(e) {
+      errors.push(src.label + ': ' + e.message);
+      console.warn('[GBA Vault] Source failed:', src.label, e.message);
+    }
+  }
+
+  throw new Error(
+    'Could not load GBA engine.\n\nAttempted:\n' + errors.join('\n') + '\n\n' +
+    '• If self-hosted shows 404: run setup.sh and upload the js/ folder to GitHub\n' +
+    '• If CDNs show "class not defined": open browser console (F12) and look for\n' +
+    '  the actual JS error — there may be a script blocked by CSP or an ad blocker'
+  );
+}
+
+function showErrDialog(msg) {
+  document.getElementById('gbaErrDialog')?.remove();
+  const d = document.createElement('div');
+  d.id = 'gbaErrDialog';
+  d.style.cssText = 'position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;';
+  d.innerHTML = `
+    <div style="background:#c0c0c0;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #444;border-bottom:2px solid #444;width:440px;max-width:95vw;box-shadow:4px 4px 0 #0006;">
+      <div style="background:linear-gradient(90deg,#800000,#c03030);padding:3px 6px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#fff;">⚠ ENGINE ERROR</span>
+        <button onclick="document.getElementById('gbaErrDialog').remove()" style="width:16px;height:14px;background:#c0c0c0;border-top:1px solid #fff;border-left:1px solid #fff;border-right:1px solid #444;border-bottom:1px solid #444;font-size:9px;cursor:pointer;font-weight:bold;">✕</button>
+      </div>
+      <div style="padding:14px 16px;display:flex;gap:12px;">
+        <div style="font-size:36px;line-height:1;">🛑</div>
+        <div style="font-size:10px;font-family:Arial,sans-serif;line-height:1.7;white-space:pre-wrap;word-break:break-all;">${msg.replace(/</g,'&lt;')}</div>
+      </div>
+      <div style="padding:6px 12px 10px;display:flex;gap:8px;justify-content:center;">
+        <button onclick="retryEngineLoad()" style="min-width:80px;padding:4px 12px;background:#c0c0c0;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #444;border-bottom:2px solid #444;font-size:11px;cursor:pointer;">↺ Retry</button>
+        <button onclick="document.getElementById('gbaErrDialog').remove()" style="min-width:80px;padding:4px 12px;background:#c0c0c0;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #444;border-bottom:2px solid #444;font-size:11px;cursor:pointer;">OK</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+}
+
+async function retryEngineLoad() {
+  document.getElementById('gbaErrDialog')?.remove();
+  engineReady = false;
+  document.querySelectorAll('script[data-gba]').forEach(s => s.remove());
+  setStatus('Retrying...');
+  try {
+    await initGBAEngine();
+    showToast('Engine loaded! Now select your ROM.','success');
+    document.getElementById('engineStatusLine').textContent = 'ENGINE READY ✓ — DROP ROM TO START';
+  } catch(e) {
+    showErrDialog(e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ROM LOADING
+// ══════════════════════════════════════════════════════════
+function handleROMFile(e) { const f = e.target.files[0]; if (f) loadROMFile(f); }
+
+// Fetch BIOS once and cache it
+let biosBuffer = null;
+async function getBios() {
+  if (biosBuffer) return biosBuffer;
+  // Try self-hosted first, then gbajs2 repo
+  const urls = [
+    '/resources/bios.bin',
+    'https://raw.githubusercontent.com/andychase/gbajs2/master/resources/bios.bin',
+    'https://cdn.jsdelivr.net/gh/andychase/gbajs2@master/resources/bios.bin',
+  ];
+  for (const url of urls) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) { biosBuffer = await r.arrayBuffer(); return biosBuffer; }
+    } catch {}
+  }
+  throw new Error('Could not load GBA BIOS file.\n\nRun setup.sh to download resources/bios.bin to your repo.');
+}
+
+async function loadROMFile(file) {
+  const cover = document.getElementById('loadingCover');
+  cover.classList.add('on');
+  setStatus('Reading ROM...');
+
+  if (!engineReady) {
+    try { await initGBAEngine(); }
+    catch(e) { cover.classList.remove('on'); showErrDialog(e.message); return; }
+  }
+
+  // Load BIOS
+  let bios;
+  try {
+    setStatus('Loading BIOS...');
+    bios = await getBios();
+  } catch(e) {
+    cover.classList.remove('on');
+    showErrDialog(e.message);
+    return;
+  }
+
+  // Read ROM file
+  const romBuffer = await file.arrayBuffer();
+  currentROMData = romBuffer;
+  currentROMName = file.name.replace(/\.(gba|zip)$/i,'');
+
+  try {
+    if (gba) { try { gba.pause(); } catch {} }
+    gba = new GameBoyAdvance();
+    gba.logLevel = gba.LOG_ERROR;
+    gba.setCanvas(document.getElementById('gbaCanvas'));
+    gba.keypad.eatInput = true;
+    gba.setLogger((level, msg) => { if (level <= gba.LOG_ERROR) console.error('[GBA]', msg); });
+
+    // setBios + setRom are the correct gbajs2 API
+    gba.setBios(bios, false);
+    const result = gba.setRom(romBuffer);
+    if (!result) throw new Error('setRom returned false — invalid ROM format');
+
+    // Restore SRAM
+    const sav = localStorage.getItem(SRAM_KEY + currentROMName);
+    if (sav) {
+      try { gba.setSavedata(Uint8Array.from(atob(sav), c=>c.charCodeAt(0)).buffer); } catch {}
+    }
+
+    document.getElementById('dropZone').style.display = 'none';
+    cover.classList.remove('on');
+    document.getElementById('powerLed').classList.add('on');
+    document.getElementById('windowTitle').textContent = '[ ' + currentROMName.toUpperCase().slice(0,28) + ' ]';
+    document.getElementById('playPauseBtn').disabled = false;
+    document.getElementById('resetBtn').disabled = false;
+    document.getElementById('saveBtn').disabled = false;
+    document.getElementById('trayDot').style.cssText = 'background:#ff2200;box-shadow:0 0 4px #ff2200;';
+
+    isRunning = false; isPaused = false;
+    startEmulation();
+    renderSaveSlots();
+  } catch(err) {
+    cover.classList.remove('on');
+    showErrDialog('ROM load error:\n\n' + err.message + '\n\nMake sure this is a valid .gba file.');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// PLAYBACK
+// ══════════════════════════════════════════════════════════
+function startEmulation() {
+  if (!gba) return;
+  gba.runStable();
+  isRunning = true; isPaused = false;
+  document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+  setStatus('Running: ' + currentROMName);
+  startFPSLoop();
+}
+
+function togglePause() {
+  if (!gba || !isRunning) return;
+  if (isPaused) {
+    gba.runStable(); isPaused = false;
+    document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+    setStatus('Running: ' + currentROMName);
+  } else {
+    gba.pause(); isPaused = true;
+    document.getElementById('playPauseBtn').textContent = '▶ Play';
+    setStatus('Paused: ' + currentROMName);
+  }
+}
+
+function resetGame() {
+  if (!gba || !currentROMData) return;
+  gba.pause();
+  gba.setBios(biosBuffer, false);
+  gba.setRom(currentROMData);
+  gba.runStable();
+  isRunning = true; isPaused = false;
+  document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+  setStatus('Running: ' + currentROMName);
+  showToast('Game reset!');
+}
+
+// ══════════════════════════════════════════════════════════
+// SAVE STATES
+// ══════════════════════════════════════════════════════════
+function saveState(slot = null) {
+  if (!gba || !isRunning) { showToast('No game running!','error'); return; }
+  const wasPaused = isPaused; if (!isPaused) gba.pause();
+  try {
+    const s = getSaves(); if (!s[currentROMName]) s[currentROMName] = {};
+    const slots = s[currentROMName];
+    const t = slot !== null ? slot : ([0,1,2,3,4,5,6,7].find(i=>!slots[i]) ?? 0);
+    slots[t] = { state: JSON.stringify(gba.freeze()), time: new Date().toLocaleString(), game: currentROMName };
+    setSaves(s); renderSaveSlots();
+    showToast('Saved to Slot '+(t+1)+'!','success');
+  } catch(e) { showToast('Save failed: '+e.message,'error'); }
+  if (!wasPaused) gba.runStable();
+}
+
+function loadState(slot) {
+  const s = getSaves()[currentROMName]?.[slot];
+  if (!s) { showToast('Slot is empty!','error'); return; }
+  try {
+    const wasPaused = isPaused; if (!isPaused) gba.pause();
+    gba.defrost(JSON.parse(s.state));
+    if (!wasPaused) gba.runStable();
+    isPaused = false;
+    document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+    showToast('Loaded Slot '+(slot+1)+'!','success');
+  } catch(e) { showToast('Load failed: '+e.message,'error'); }
+}
+
+function deleteState(slot) {
+  const saves = getSaves();
+  if (!saves[currentROMName]?.[slot]) return;
+  if (!confirm('Delete save slot '+(slot+1)+'?')) return;
+  delete saves[currentROMName][slot]; setSaves(saves); renderSaveSlots();
+  showToast('Slot '+(slot+1)+' deleted.');
+}
+
+function renderSaveSlots() {
+  const c = document.getElementById('saveSlotsContainer');
+  const saves = getSaves(); const slots = saves[currentROMName] || {};
+  document.getElementById('slotCount').textContent = Object.keys(slots).length+'/8 used';
+  c.innerHTML = '';
+  for (let i=0;i<8;i++) {
+    const slot=slots[i]; const div=document.createElement('div'); div.className='slot-item';
+    if (slot) {
+      div.innerHTML=`<span class="slot-num">${i+1}</span><div class="slot-info"><div class="slot-name">${slot.game||'?'}</div><div class="slot-date">${slot.time}</div></div><div class="slot-acts"><button onclick="loadState(${i});event.stopPropagation()">Load</button><button onclick="deleteState(${i});event.stopPropagation()">Del</button></div>`;
+    } else {
+      div.style.opacity='0.5';
+      div.innerHTML=`<span class="slot-num">${i+1}</span><div class="slot-info"><div class="slot-name" style="color:#999">— Empty —</div></div><div class="slot-acts"><button onclick="saveState(${i});event.stopPropagation()">Save</button></div>`;
+    }
+    c.appendChild(div);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// SRAM
+// ══════════════════════════════════════════════════════════
+function exportSRAM() {
+  if (!gba||!currentROMName) { showToast('No game loaded!','error'); return; }
+  try {
+    const buf = gba.getSavedata();
+    if (!buf||buf.byteLength===0) { showToast('No SRAM data.','error'); return; }
+    const bytes = new Uint8Array(buf);
+    localStorage.setItem(SRAM_KEY+currentROMName, btoa(String.fromCharCode(...bytes)));
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
+    a.download=currentROMName+'.sav'; a.click();
+    showToast('SRAM exported!','success');
+  } catch(e) { showToast('Export failed: '+e.message,'error'); }
+}
+function importSRAM() { document.getElementById('sramInput').click(); }
+function handleSRAMImport(e) {
+  const f=e.target.files[0]; if(!f||!gba) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try {
+      gba.setSavedata(ev.target.result);
+      localStorage.setItem(SRAM_KEY+currentROMName, btoa(String.fromCharCode(...new Uint8Array(ev.target.result))));
+      showToast('SRAM imported!','success');
+    } catch { showToast('Import failed!','error'); }
+  };
+  r.readAsArrayBuffer(f);
+}
+
+// ══════════════════════════════════════════════════════════
+// INPUT
+// ══════════════════════════════════════════════════════════
+const keyMap = {ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',z:'a',Z:'a',x:'b',X:'b',a:'shoulder_left',A:'shoulder_left',s:'shoulder_right',S:'shoulder_right',Enter:'start',Backspace:'select'};
+document.addEventListener('keydown', e=>{
+  if (e.key==='p'||e.key==='P') { togglePause(); return; }
+  if (e.key==='F5') { e.preventDefault(); saveState(); return; }
+  if (e.key==='F8') { e.preventDefault(); const ss=getSaves()[currentROMName]||{}; const k=Object.keys(ss).map(Number).sort((a,b)=>b-a); if(k.length) loadState(k[0]); return; }
+  const b=keyMap[e.key]; if(b) pressKey(b);
+});
+document.addEventListener('keyup', e=>{ const b=keyMap[e.key]; if(b) releaseKey(b); });
+function pressKey(b) { if(gba&&isRunning) gba.keypad.keydown(b); document.querySelectorAll(`[data-key="${b}"]`).forEach(el=>el.classList.add('active')); }
+function releaseKey(b) { if(gba&&isRunning) gba.keypad.keyup(b); document.querySelectorAll(`[data-key="${b}"]`).forEach(el=>el.classList.remove('active')); }
+
+// ══════════════════════════════════════════════════════════
+// DRAG & DROP
+// ══════════════════════════════════════════════════════════
+const dzEl = document.getElementById('dropZone');
+document.addEventListener('dragover', e=>{ e.preventDefault(); dzEl.classList.add('drag-over'); });
+document.addEventListener('dragleave', ()=>dzEl.classList.remove('drag-over'));
+document.addEventListener('drop', e=>{
+  e.preventDefault(); dzEl.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&/\.(gba|zip)$/i.test(f.name)) loadROMFile(f); else showToast('Drop a .gba file!','error');
+});
+
+// ══════════════════════════════════════════════════════════
+// FPS
+// ══════════════════════════════════════════════════════════
+let fpsActive=false;
+function startFPSLoop() {
+  if(fpsActive) return; fpsActive=true;
+  let frames=0, last=performance.now();
+  if(gba) gba.video.frameCallback=()=>frames++;
+  (function tick() {
+    if(!isRunning){fpsActive=false;document.getElementById('fpsDisplay').textContent='-- FPS';return;}
+    const now=performance.now();
+    if(now-last>=1000){document.getElementById('fpsDisplay').textContent=frames+' FPS';frames=0;last=now;}
+    requestAnimationFrame(tick);
+  })();
+}
+
+// ══════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════
+let _tt;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+type;
+  clearTimeout(_tt); _tt=setTimeout(()=>{t.className='';},3500);
+}
+
+// ══════════════════════════════════════════════════════════
+// AUTO-SAVE SRAM
+// ══════════════════════════════════════════════════════════
+window.addEventListener('beforeunload',()=>{
+  if(gba&&currentROMName){try{const b=gba.getSavedata();if(b&&b.byteLength>0)localStorage.setItem(SRAM_KEY+currentROMName,btoa(String.fromCharCode(...new Uint8Array(b))));}catch{}}
+});
+
+// ══════════════════════════════════════════════════════════
+// GOOGLE DRIVE
+// ══════════════════════════════════════════════════════════
+const GDRIVE_SCOPES='https://www.googleapis.com/auth/drive.readonly';
+const GDRIVE_DISC='https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+let gapiLoaded=false,gisLoaded=false,tokenClient=null,gAccessToken=null,driveSearchTimer=null;
+function loadGoogleAPIs(){return new Promise(res=>{if(gapiLoaded&&gisLoaded){res();return;}let a=false,b=false;const check=()=>{if(a&&b)res();};const s1=document.createElement('script');s1.src='https://apis.google.com/js/api.js';s1.onload=()=>{gapi.load('client',()=>{gapiLoaded=true;a=true;check();});};document.head.appendChild(s1);const s2=document.createElement('script');s2.src='https://accounts.google.com/gsi/client';s2.onload=()=>{gisLoaded=true;b=true;check();};document.head.appendChild(s2);});}
+async function initGoogleAuth(){const cid=document.getElementById('gClientId').value.trim();if(!cid){showGAuthError('Enter your Client ID.');return;}localStorage.setItem('gba_vault_gclient',cid);try{showToast('Connecting...','');await loadGoogleAPIs();await gapi.client.init({discoveryDocs:[GDRIVE_DISC]});tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:GDRIVE_SCOPES,callback:handleTokenResponse,error_callback:err=>showGAuthError('Error: '+(err.message||JSON.stringify(err)))});tokenClient.requestAccessToken({prompt:'consent'});}catch(e){showGAuthError('Failed: '+e.message);}}
+function handleTokenResponse(tr){if(tr.error){showGAuthError('Auth failed: '+tr.error);return;}gAccessToken=tr.access_token;gapi.client.setToken({access_token:gAccessToken});fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+gAccessToken}}).then(r=>r.json()).then(i=>{document.getElementById('gUserEmail').textContent=i.email||'Connected';}).catch(()=>{});document.getElementById('driveSetupPanel').style.display='none';document.getElementById('driveFilesPanel').style.display='block';loadRecentGBAFiles();}
+async function loadRecentGBAFiles(){const list=document.getElementById('driveRecentList');list.innerHTML='<div class="spin-wrap"><div class="spinner"></div> Searching Drive...</div>';try{const r=await gapi.client.drive.files.list({q:"name contains '.gba' and trashed=false",fields:'files(id,name,size,modifiedTime)',orderBy:'modifiedTime desc',pageSize:20});renderDriveFiles(r.result.files||[],list);}catch(e){list.innerHTML=`<div class="list-empty" style="color:#c00">Error: ${e.message}</div>`;}}
+async function searchDriveFiles(){const q2=document.getElementById('driveSearchInput').value.trim();const list=document.getElementById('driveSearchList');switchDriveTab('search',document.getElementById('tab-search'));if(!q2){list.innerHTML='<div class="list-empty">Enter a search term.</div>';return;}list.innerHTML='<div class="spin-wrap"><div class="spinner"></div> Searching...</div>';try{const q=`name contains '${q2.replace(/'/g,"\\'")}' and trashed=false`;const r=await gapi.client.drive.files.list({q,fields:'files(id,name,size,modifiedTime)',orderBy:'modifiedTime desc',pageSize:25});renderDriveFiles(r.result.files||[],list);}catch(e){list.innerHTML=`<div class="list-empty" style="color:#c00">Failed: ${e.message}</div>`;}}
+function renderDriveFiles(files,container){if(!files.length){container.innerHTML='<div class="list-empty">No .gba files found.</div>';return;}container.innerHTML='';files.forEach(file=>{const size=file.size?fmt(parseInt(file.size)):'?';const date=file.modifiedTime?new Date(file.modifiedTime).toLocaleDateString():'';const div=document.createElement('div');div.className='file-row';div.innerHTML=`<span class="file-ico">🎮</span><div class="file-details"><div class="file-name">${esc(file.name)}</div><div class="file-meta">Modified: ${date}</div></div><span class="file-size">${size}</span>`;div.onclick=()=>downloadAndLoadDriveFile(file);container.appendChild(div);});}
+async function downloadAndLoadDriveFile(file){closeDriveModal();document.getElementById('loadingCover').classList.add('on');showToast('Downloading '+file.name+'...','');try{const resp=await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,{headers:{Authorization:'Bearer '+gAccessToken}});if(!resp.ok)throw new Error('HTTP '+resp.status);loadROMFile(new File([await resp.arrayBuffer()],file.name,{type:'application/octet-stream'}));}catch(e){document.getElementById('loadingCover').classList.remove('on');showToast('Download failed: '+e.message,'error');}}
+function debouncedDriveSearch(){clearTimeout(driveSearchTimer);driveSearchTimer=setTimeout(searchDriveFiles,600);}
+function signOutGoogle(){if(gAccessToken)google.accounts.oauth2.revoke(gAccessToken,()=>{});gAccessToken=null;gapi.client.setToken(null);document.getElementById('driveSetupPanel').style.display='block';document.getElementById('driveFilesPanel').style.display='none';showToast('Signed out.');}
+function switchDriveTab(tab,el){document.querySelectorAll('.drive-tab-btn').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.dtabpane').forEach(p=>p.classList.remove('active'));if(el)el.classList.add('active');document.getElementById(tab==='recent'?'driveRecentPanel':'driveSearchPanel').classList.add('active');}
+function openDriveModal(){document.getElementById('driveModal').classList.add('open');const saved=localStorage.getItem('gba_vault_gclient');if(saved)document.getElementById('gClientId').value=saved;if(gAccessToken){document.getElementById('driveSetupPanel').style.display='none';document.getElementById('driveFilesPanel').style.display='block';loadRecentGBAFiles();}}
+function closeDriveModal(){document.getElementById('driveModal').classList.remove('open');}
+document.getElementById('driveModal').addEventListener('click',function(e){if(e.target===this)closeDriveModal();});
+function showGAuthError(msg){const el=document.getElementById('gAuthError');el.textContent=msg;el.style.display='block';}
+function fmt(b){if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(1)+' KB';return (b/1048576).toFixed(1)+' MB';}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+renderSaveSlots();
+setStatus('Loading engine...');
+
+initGBAEngine().then(()=>{
+  setStatus('Ready — drop a .GBA ROM to play');
+  document.getElementById('engineStatusLine').textContent = 'ENGINE READY ✓ — DROP ROM TO START';
+}).catch(e=>{
+  setStatus('Engine load failed');
+  document.getElementById('engineStatusLine').textContent = 'ENGINE LOAD FAILED — SEE ERROR';
+  showErrDialog(e.message);
+});
+</script>
+</body>
+</html>
